@@ -1,5 +1,3 @@
-"""Flappy Bird game package."""
-
 from game.engine import GameEngine, GameState, PipePair
 from game.headless import GameHeadless, fitness_from_game, run_episode
 from game.sensors import extract_inputs

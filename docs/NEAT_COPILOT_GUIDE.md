@@ -1,45 +1,48 @@
-# NEAT Neural Evolution Game AI — Copilot Agent Guide
+# NEAT Flappy Bird — Antigravity Agent Guide
 
-**Status:** 4P-Sprint Project | Week 1-4 Build Plan | Python 3.9+
+**Status:** 4P-Sprint Project | Week 1-4 (8 sessions) | Python 3.9+ | IDE: Antigravity
+
+> Full session-by-session Antigravity prompts for `docs/02_NEAT_FLAPPY_BIRD.md`, the source-of-truth plan. Paste that file into a new Antigravity chat for full context before starting Session 1.
 
 ---
 
-## How to Use This Document with GitHub Copilot
+## How to Use This Document with Antigravity
 
-### Two Strategies:
+### Two Strategies
 
 **Option A: .md File in Repo (Recommended)**
-- Save this as `docs/COPILOT_GUIDE.md` in your repo
-- Copilot can see it and reference it automatically (in VS Code, it reads files in your workspace)
-- Update it as you progress; Copilot learns from accumulated context
-- **Best for:** Staying aligned over 4 weeks, iterating on feedback
+- Keep this file (and `02_NEAT_FLAPPY_BIRD.md`) open in Antigravity alongside your code
+- Antigravity reads open files in your workspace as context automatically
+- Update it as you progress; Antigravity picks up accumulated context each session
+- **Best for:** staying aligned over 4 weeks, iterating on feedback
 
 **Option B: Copy-Paste Prompts (Quick Sessions)**
-- Use the prompts below for individual chat sessions in Copilot Chat
-- Paste one "Weekly Prompt" per session
-- **Best for:** Short focused coding bursts, testing specific modules
+- Use the "Session N" prompts below for individual Antigravity Chat sessions
+- Paste one session's prompts at a time
+- **Best for:** short, focused coding bursts
 
-**Recommendation:** Do both. Keep the .md in your repo. Copy-paste the weekly prompts into Copilot Chat when starting a new session.
+**Recommendation:** Do both. Keep the docs open in Antigravity. Copy-paste the session prompts into Antigravity Chat when starting a new sitting.
 
 ---
 
-## System Context — Give Copilot This First
+## System Context — Give Antigravity This First
 
-**Paste this into a new Copilot Chat session to set expectations:**
+**Paste this into a new Antigravity Chat session to set expectations:**
 
 ```
-I'm building a NEAT (NeuroEvolution of Augmenting Topologies) neural network 
-from scratch to play a 2D game I'm also building from scratch. No ML libraries. 
-Pure Python.
+I'm building NEAT (NeuroEvolution of Augmenting Topologies) completely from
+scratch in Python to play a custom Flappy Bird clone I'm also building from
+scratch. No ML libraries. Pure Python + pygame + numpy.
 
 Project structure:
-- game/        # Game engine, sensors, headless mode
+- game/        # Flappy Bird engine, sensors, headless mode
 - neat/        # Genome, network, population, evolution loop
 - visualizer/  # Live pygame overlay showing best agent + stats
 - main.py      # Wires everything
 
-I'm a 2nd year CE student. I know Python, C++, Java, JS. Push me on architecture 
-decisions — don't hand-hold.
+I'm a 2nd-year Computer Engineering student (Pakistan), currently doing an
+AI/ML internship. I know Python and C++. Push me on architecture decisions —
+don't hand-hold.
 
 Constraints:
 - Week 1: Game engine + headless mode (no NEAT yet)
@@ -47,7 +50,7 @@ Constraints:
 - Week 3: Full NEAT (speciation, crossover, evolution loop)
 - Week 4: Visualizer + tuning + live demo
 
-Do not use external ML libraries (no neat-python, sklearn, tensorflow). 
+Do not use external ML libraries (no neat-python, sklearn, tensorflow).
 Build NEAT from first principles.
 
 Code style:
@@ -55,67 +58,61 @@ Code style:
 - Dataclasses for genome/nodes/connections
 - Clear variable names (avoid single letters except i, j, x, y)
 - Docstrings on public methods
-- Tests optional but appreciated for core logic
+- Tests appreciated for core logic (pytest)
 ```
 
 ---
 
 ## Project Requirements (Complete Spec)
 
-### Game (Week 1)
+### The Game — Flappy Bird Only
 
-**Pick one game** (recommendation: dino runner or flappy bird for speed):
+This project builds one game: a Flappy Bird clone. (Not a dino runner, not a
+configurable multi-game engine — see `02_NEAT_FLAPPY_BIRD.md` if that ever
+changes.)
 
-#### Dino Runner
-- Player sprite at fixed y position (or variable y for jumping)
-- Obstacles: cacti (jump to clear) and birds (duck to clear)
-- Ground scrolls left, obstacles spawn right
-- Collision detection (AABB bounding boxes)
-- Score = distance traveled (in pixels)
-- Speed increases slightly per 500 distance
+- Gravity pulls the player downward each frame
+- One action: flap (upward velocity impulse)
+- Pipes scroll left, spawn right at random gap heights
+- Death: hit a pipe, hit the ceiling, hit the floor
+- Score: number of pipes cleared
 
-**Game Loop:**
-- 60 FPS fixed timestep
-- Input: jump, duck (from neural net)
-- Physics: gravity, jump arc, collision checks
-- Render mode (pygame) + headless mode (no rendering, return score)
+**Game constants:**
 
-**Sensor Inputs for Neural Net:**
-1. Distance to next obstacle (pixels, normalized 0–1)
-2. Obstacle width (0–1)
-3. Obstacle height (0–1)
-4. Obstacle type (0 = cactus, 1 = bird, one-hot or direct)
-5. Player Y position (0–1)
-6. Player Y velocity (−1 to 1)
-7. Ground speed (0–1, increases over time)
-8. Time since last obstacle (frames, normalized)
+```python
+SCREEN_WIDTH    = 800
+SCREEN_HEIGHT   = 600
+GRAVITY         = 0.5           # pixels/frame²
+FLAP_STRENGTH   = -8            # upward velocity impulse
+PIPE_SPEED      = 3             # pixels/frame leftward
+PIPE_SPACING    = 250           # horizontal gap between pipe pairs
+PIPE_GAP        = 150           # vertical opening height
+PIPE_WIDTH      = 80
+PLAYER_RADIUS   = 15
+FPS             = 60
+```
 
-**Output:**
-1. Jump action (sigmoid, threshold 0.5)
-2. Duck action (sigmoid, threshold 0.5)
+**Sensor inputs (5 values):**
 
-#### Alternative: Flappy Bird Clone
-- Gravity pulls player downward
-- Flap (from neural net) applies upward velocity
-- Pipes scroll left, spawn right
-- Collision: pipes or ceiling/floor = death
-- Score = pipes cleared
+```
+1. Horizontal distance to next pipe pair       [0, 1]
+2. Vertical distance from player to top pipe   [-1, 1]  (negative = above gap)
+3. Vertical distance from player to bottom pipe [-1, 1]
+4. Player Y velocity                           [-1, 1]
+5. Player Y position                           [0, 1]
+```
 
-**Sensor Inputs:**
-1. Horizontal distance to next pipe pair (0–1)
-2. Distance to top pipe bottom (−1 to 1, negative = above)
-3. Distance to bottom pipe top (−1 to 1)
-4. Player Y velocity (−1 to 1)
-5. Player Y position (0–1)
+**Output (1 value, sigmoid):**
 
-**Output:**
-1. Flap action (sigmoid, threshold 0.5)
+```
+1. Flap if > 0.5, do nothing otherwise
+```
 
-**Code Requirements:**
-- `game/engine.py` — main game class, update(), render(), collision logic
-- `game/sensors.py` — extract neural network inputs from game state
-- `game/headless.py` — GameHeadless class that runs without rendering, returns final score
-- `game/constants.py` — all magic numbers (pipe spacing, gravity, speeds, etc.)
+**Code requirements:**
+- `game/engine.py` — GameEngine class, `update()`, `render()`, collision logic
+- `game/sensors.py` — `extract_inputs(state) -> list[float]`, 5 normalised inputs
+- `game/headless.py` — `GameHeadless.run_episode(network) -> float`; must run 150 episodes in under 10 seconds
+- `game/constants.py` — all magic numbers above
 
 ---
 
@@ -126,282 +123,11 @@ Code style:
 **Data Structures:**
 
 ```python
-# NodeGene: represents a neuron
-- id: int (unique)
-- type: str ("input", "hidden", "output")
-- activation: str ("tanh" or "sigmoid")
-
-# ConnectionGene: represents a synapse
-- in_node: int (source node id)
-- out_node: int (target node id)
-- weight: float
-- enabled: bool (can be disabled by mutation)
-- innovation: int (global unique ID for this connection)
-
-# Genome: complete neural network genotype
-- nodes: dict[int, NodeGene]
-- connections: dict[int, ConnectionGene]
-- fitness: float (assigned after game evaluation)
-- species_id: int (assigned during speciation)
-
-# NeuralNetwork: phenotype (built from genome)
-- layers: list of node IDs, topologically sorted
-- run(inputs: list[float]) -> list[float]
-```
-
-**Innovation Tracking:**
-- Global singleton `InnovationTracker`
-- Maps (in_node, out_node) → innovation_number
-- Reset per generation, but same pair gets same number within generation
-- Critical for crossover alignment
-
-**Network Evaluation:**
-- `network.evaluate(inputs)` does topological sort + feedforward pass
-- Uses tanh/sigmoid activations
-- Returns output layer values (list of floats)
-
-#### Week 3: Population + Evolution
-
-**Classes:**
-
-```python
-# Species: a group of similar genomes
-- id: int
-- representative: Genome (for compatibility distance)
-- members: list[Genome]
-- best_fitness: float (best in this species so far)
-- stagnation_counter: int (generations with no improvement)
-
-# Population: generation management
-- genomes: list[Genome] (all agents current gen)
-- species: list[Species]
-- generation: int
-- config: NEATConfig (hyperparameters)
-
-# NEATConfig: all tunable parameters
-- pop_size: int (default 150)
-- c1, c2, c3: float (compatibility distance weights)
-- dt: float (speciation threshold)
-- mutation_rates: dict
-- max_stagnation: int (kill species after N gens)
-```
-
-**Evolution Loop (each generation):**
-1. Evaluate fitness: run each genome through game
-2. Speciate: group by compatibility distance
-3. Fitness sharing: divide by species size
-4. Cull: remove bottom 50% per species
-5. Reproduce: allocate offspring, crossover + mutate
-6. Elitism: copy species champion unchanged
-7. Stagnation check: kill stale species
-8. Update reps: pick new representative per species
-
-**Mutation Operators:**
-- Perturb weights: (80%) add gaussian noise to random weights
-- Reset weight: (20%) set weight to uniform random
-- Add node: (3%) split a connection, insert new hidden node
-- Add connection: (5%) add new random connection between nodes
-- Toggle connection: (rare) enable/disable a connection
-
-**Crossover:**
-- Align by innovation number
-- Matching genes: random parent
-- Excess/disjoint: take from fitter parent
-- Always inherit all genes, but disabled genes have 75% chance to stay disabled
-
----
-
-### Fitness Function Design
-
-**Rule: never reward only survival.**
-
-Fitness should reward:
-- **Primary:** Making progress (distance, pipes, height, etc.)
-- **Secondary:** Efficiency (doing it fast)
-- **Penalty:** Idling (−0.01 per frame if no progress)
-
-**Example formulas:**
-
-```python
-# Dino runner
-def fitness(distance, obstacles_cleared, time_alive):
-    base = distance ** 2  # quadratic to encourage big improvements
-    bonus = 10 * obstacles_cleared
-    penalty = -0.01 * time_alive if distance == 0 else 0
-    return base + bonus + penalty
-
-# Flappy bird
-def fitness(pipes_cleared, time_alive):
-    return (pipes_cleared ** 3) + (time_alive * 0.01)
-```
-
-**Why quadratic?**
-- Linear (distance) → going from 100 to 200 feels same as 1000 to 1100 → slow convergence
-- Quadratic (distance²) → 200 is 4x better than 100, 1100 is 1.21x better than 1000 → creates gradient pressure to improve
-
----
-
-### Visualizer (Week 4)
-
-**Components:**
-
-1. **Game window**: top-left, shows best agent playing (live each generation)
-2. **Network graph**: bottom-left, draws neural net topology with weighted edges
-   - Circle = node (color: input=blue, hidden=purple, output=green)
-   - Line = connection (thickness = weight magnitude, color = sign)
-3. **Stats panel**: right side
-   - Best fitness this generation
-   - Average fitness this generation
-   - Species count
-   - Generation number
-   - Stagnation counters per species
-4. **Fitness curve**: bottom-right, plot of best/avg fitness over generations
-
-**Interactive:**
-- Space to pause/resume
-- R to reset
-- Slider to speed up/slow down game playback
-- Arrow keys to inspect different agents
-
----
-
-## Weekly Prompts for Copilot
-
-### **WEEK 1: Game Engine**
-
-#### Prompt 1.1 — Project Setup & Game Architecture
-
-```
-I'm building a NEAT evolution system and need to start with the game.
-
-Create the project structure with these directories:
-- game/
-- neat/
-- visualizer/
-- tests/
-
-Then create game/constants.py with all magic numbers for a [DINO RUNNER / FLAPPY BIRD]:
-- Screen size (800x600)
-- Player dimensions
-- Obstacle dimensions
-- Spawn rates
-- Physics (gravity, jump force, etc.)
-- Speed scaling
-
-Use dataclasses where it makes sense. Add type hints everywhere.
-```
-
-#### Prompt 1.2 — Game Engine Core
-
-```
-Create game/engine.py with a GameEngine class:
-
-Methods needed:
-- __init__(headless=False)
-- update(dt) — apply physics, check collisions, spawn obstacles
-- render() — draw to pygame surface (only if not headless)
-- get_state() -> GameState — returns positions/velocities for sensors
-- is_alive() -> bool
-- get_score() -> float
-- set_actions(jump: bool, duck: bool) — apply player actions this frame
-
-Use AABB collision detection. Obstacles should recycle (off-screen → recycle to right).
-Player should be represented as a simple rect with velocity.
-
-Make sure the update loop is frame-rate independent (use dt parameter).
-```
-
-#### Prompt 1.3 — Sensor Extraction
-
-```
-Create game/sensors.py with a function:
-
-def extract_inputs(game_state: GameState) -> list[float]:
-    # Return normalized sensor inputs (all in range [0, 1] or [-1, 1])
-    # For [DINO/FLAPPY], return these 8 / 5 inputs...
-    
-Inputs should be:
-- [Dino: distance to obstacle, obstacle width, height, type, player y, player vy, speed, time since spawn]
-- [Flappy: dist to pipes, dist to top, dist to bottom, player vy, player y]
-
-Normalize everything to [-1, 1] or [0, 1]. Use constants from game/constants.py.
-```
-
-#### Prompt 1.4 — Headless Mode
-
-```
-Create game/headless.py with a GameHeadless class that runs the game without rendering.
-
-class GameHeadless(GameEngine):
-    def run_episode(self, network_controller) -> float:
-        '''
-        Run one full game episode.
-        Each frame:
-        1. Extract sensors
-        2. Feed to network_controller (will pass a NeuralNetwork object in Week 2)
-        3. Get actions (jump, duck)
-        4. Update game
-        5. Check death
-        Return final score.
-        '''
-
-This should run at least 100x faster than rendered mode. Make sure there's no 
-pygame drawing happening.
-```
-
-#### Prompt 1.5 — Main + Quick Test
-
-```
-Create main.py with a simple test:
-
-from game.engine import GameEngine
-
-game = GameEngine(headless=False)
-for frame in range(60 * 5):  # 5 seconds at 60 FPS
-    game.update(1/60)
-    game.render()
-    # Random actions for testing
-    jump = random.random() > 0.7
-    duck = random.random() > 0.8
-    game.set_actions(jump, duck)
-
-Print the final score. The game should run smoothly without crashes.
-```
-
----
-
-### **WEEK 2: Neural Network + Genome**
-
-#### Prompt 2.1 — Innovation Tracker
-
-```
-Create neat/innovation.py with an InnovationTracker singleton:
-
-class InnovationTracker:
-    @classmethod
-    def reset(cls):
-        # Clear history, reset counter (called once per generation)
-    
-    @classmethod
-    def get_innovation(cls, in_node: int, out_node: int) -> int:
-        # If (in_node, out_node) pair already exists this generation, 
-        # return its existing innovation number
-        # Otherwise, increment counter and assign new number
-
-Requirement: two mutations that add the same connection in the same generation
-must receive the same innovation number. This is how crossover alignment works.
-```
-
-#### Prompt 2.2 — Node & Connection Genes
-
-```
-Create neat/genome.py with dataclasses:
-
 @dataclass
 class NodeGene:
     id: int
-    type: str  # "input", "hidden", or "output"
-    activation: str = "tanh"  # or "sigmoid"
+    type: str        # "input" | "hidden" | "output"
+    activation: str   # "tanh" for hidden, "sigmoid" for output
 
 @dataclass
 class ConnectionGene:
@@ -409,84 +135,32 @@ class ConnectionGene:
     out_node: int
     weight: float
     enabled: bool = True
-    innovation: int = None
+    innovation: int = 0
 
 @dataclass
 class Genome:
-    inputs: int  # number of input nodes
-    outputs: int  # number of output nodes
+    inputs: int               # 5 for Flappy Bird
+    outputs: int              # 1 for Flappy Bird
     nodes: dict[int, NodeGene]
     connections: dict[int, ConnectionGene]
     fitness: float = 0.0
     species_id: int = -1
-    
-    def copy(self) -> 'Genome':
-        # Return a deep copy
-
-Also add to Genome:
-    def add_node(self, conn_to_split: ConnectionGene) -> NodeGene:
-        # Split a connection: remove it, add new hidden node, add two new connections
-        
-    def add_connection(self, in_id: int, out_id: int) -> ConnectionGene:
-        # Add new connection (get innovation number from InnovationTracker)
-        
-    def mutate_weights(self, mutate_rate=0.8, perturb_rate=0.9, perturb_power=0.1):
-        # 80% of connections get mutation
-        # Of those, 90% get perturbed (gaussian noise), 10% reset to random
 ```
 
-#### Prompt 2.3 — Neural Network Evaluation
+**Innovation Tracking:**
+- Global singleton `InnovationTracker`
+- Maps `(in_node, out_node) → innovation_number`
+- `reset()` clears the history dict once per generation — the counter itself is **never** reset
+- Same pair in the same generation always gets the same number — this is what makes crossover alignment work
 
-```
-Create neat/network.py with a NeuralNetwork class:
+**Network Evaluation:**
+- `network.evaluate(inputs)` does topological sort + feedforward pass
+- Input nodes: identity. Hidden: tanh. Output: sigmoid.
+- No recurrent connections — `add_connection()` must reject cycles
 
-class NeuralNetwork:
-    def __init__(self, genome: Genome):
-        # Build from genome
-        # Topologically sort nodes (inputs → hidden → outputs)
-        # Store activation functions
-    
-    def evaluate(self, inputs: list[float]) -> list[float]:
-        # Forward pass
-        # 1. Load inputs into input nodes
-        # 2. Process hidden nodes (in topological order)
-        # 3. Return output values
-        
-        Activations:
-        - input: identity (no activation)
-        - hidden: tanh
-        - output: sigmoid (for binary decisions like jump/duck)
+#### Week 3: Population + Evolution
 
-Use numpy for efficiency if evaluating many times per second, but pure Python 
-is acceptable.
-```
-
-#### Prompt 2.4 — Manual Testing
-
-```
-Create a test script (test_week2.py):
-
-1. Create a simple Genome with 8 inputs, 2 outputs
-2. Add a few hidden nodes and connections manually
-3. Create a NeuralNetwork from it
-4. Feed random inputs and verify outputs are in [0, 1] range
-5. Mutate the genome (add node, add connection, perturb weights)
-6. Verify the network still runs
-7. Time it: evaluate 100 times, should take <10ms
-
-Print a network diagram (simple text representation) showing 
-nodes and their connections.
-```
-
----
-
-### **WEEK 3: NEAT Evolution Loop**
-
-#### Prompt 3.1 — Species Management
-
-```
-Create neat/species.py:
-
+```python
 @dataclass
 class Species:
     id: int
@@ -494,78 +168,6 @@ class Species:
     members: list[Genome]
     best_fitness: float = 0.0
     stagnation_counter: int = 0
-    
-    def compute_adjusted_fitness(self):
-        # For each member, divide fitness by species size
-        # Returns list of adjusted fitnesses
-        # This prevents one species from dominating
-
-def compatibility_distance(g1: Genome, g2: Genome, c1=1.0, c2=1.0, c3=0.4) -> float:
-    '''
-    Calculate genetic distance between two genomes.
-    d = (c1 * E + c2 * D) / N + c3 * W̄
-    where:
-    - E = excess genes (in g1 but not g2, or vice versa)
-    - D = disjoint genes (in both but different structure)
-    - N = max genes between them
-    - W̄ = average weight difference of matching genes
-    '''
-    # Align by innovation number
-    # Count excess/disjoint
-    # Compute avg weight delta
-    # Return distance
-```
-
-#### Prompt 3.2 — Speciation
-
-```
-Create a Speciation class in neat/species.py:
-
-class Speciation:
-    def speciate(self, genomes: list[Genome], existing_species: list[Species], 
-                 threshold: float = 3.0) -> list[Species]:
-        '''
-        Assign each genome to a species.
-        
-        Algorithm:
-        1. For each genome, compare to representative of each existing species
-        2. If distance < threshold, add to that species
-        3. If no match, create new species with this genome as representative
-        4. Return updated species list
-        '''
-```
-
-#### Prompt 3.3 — Crossover & Reproduction
-
-```
-Add to neat/genome.py:
-
-def crossover(parent1: Genome, parent2: Genome) -> Genome:
-    '''
-    Assume parent1 is fitter (or equal).
-    
-    1. Align by innovation number
-    2. For matching connections: random pick from parent1 or parent2
-    3. For excess/disjoint: take from fitter parent (parent1)
-    4. Copy inherited nodes
-    5. Return child
-    '''
-
-def mutate(self, config: NEATConfig) -> None:
-    '''
-    Apply mutations in order:
-    1. Mutate weights
-    2. Add connection with probability config.add_conn_rate
-    3. Add node with probability config.add_node_rate
-    
-    This is in-place mutation.
-    '''
-```
-
-#### Prompt 3.4 — Population & Generation Loop
-
-```
-Create neat/population.py:
 
 @dataclass
 class NEATConfig:
@@ -573,182 +175,259 @@ class NEATConfig:
     c1: float = 1.0
     c2: float = 1.0
     c3: float = 0.4
-    dt: float = 3.0  # speciation threshold
+    dt: float = 3.0
     weight_mutate_rate: float = 0.8
     weight_perturb_rate: float = 0.9
     weight_perturb_power: float = 0.1
     add_node_rate: float = 0.03
     add_conn_rate: float = 0.05
     max_stagnation: int = 20
-    elitism: bool = True
-
-class Population:
-    def __init__(self, num_inputs: int, num_outputs: int, config: NEATConfig):
-        self.genomes: list[Genome] = [create_initial_genome(...) for _ in range(config.pop_size)]
-        self.species: list[Species] = []
-        self.generation: int = 0
-        self.config = config
-        self.innovation_tracker = InnovationTracker()
-    
-    def evolve_one_generation(self, fitness_values: list[float]) -> None:
-        '''
-        Core evolution loop:
-        
-        1. Assign fitness to genomes
-        2. InnovationTracker.reset()
-        3. Speciate
-        4. Compute adjusted fitness (fitness sharing)
-        5. Cull bottom 50% per species
-        6. Determine offspring allocation (proportional to avg adjusted fitness)
-        7. Reproduce: elitism, crossover, mutation
-        8. Check stagnation, kill stale species
-        9. Update species reps
-        10. Increment generation
-        '''
-    
-    def get_best_genome(self) -> Genome:
-        return max(self.genomes, key=lambda g: g.fitness)
 ```
 
-#### Prompt 3.5 — Integration Test
+**Evolution Loop (each generation):**
+1. Evaluate fitness — run every genome through Flappy Bird, record score
+2. Speciate — group genomes by compatibility distance δ
+3. Fitness sharing — divide each genome's fitness by species size
+4. Cull — remove bottom 50% of members per species
+5. Reproduce — allocate offspring proportional to avg adjusted fitness (75% crossover + mutation, 25% mutation only)
+6. Elitism — copy species champion unchanged to next generation
+7. Stagnation check — kill species with no improvement for `max_stagnation` gens
+8. Update reps — pick a random member as new species representative
+9. Reset innovation — `InnovationTracker.reset()` for next generation
+
+**Mutation Operators:**
+- Perturb weights (80%) — gaussian noise on random connections
+- Reset weight (20% of weight mutations) — uniform random new value
+- Add connection (5%) — new synapse between two existing nodes
+- Add node (3%) — split existing connection, insert new node
+- Toggle connection (rare) — enable/disable a connection
+
+**Crossover:**
+- Align by innovation number, assume parent1 is fitter
+- Matching genes → random pick
+- Excess/disjoint → from fitter parent only
+- Disabled genes: 75% chance to stay disabled in child
+
+---
+
+### Fitness Function Design
+
+**Rule: never reward only survival.**
+
+```python
+fitness = (pipes_cleared ** 3) + (time_alive * 0.01)
+```
+
+**Why cubic on pipes?** Going from 1 pipe to 5 pipes is 125x better than 1 — this creates massive pressure to actually clear pipes rather than just survive. The small time bonus prevents instant-death scoring the same as dying at pipe 1.
+
+---
+
+### Visualizer (Week 4)
+
+- **Top-left:** best agent playing Flappy Bird live
+- **Bottom-left:** neural network graph of best agent (input=blue, hidden=purple, output=green; connection thickness ∝ |weight|, colour = sign)
+- **Top-right:** stats panel (generation, best fitness, avg fitness, species count)
+- **Bottom-right:** fitness curve (best + avg over all generations)
+- **Controls:** Space = pause/resume, R = reset, +/- = speed, arrow keys = inspect agents
+
+---
+
+## Session-by-Session Prompts for Antigravity
+
+### WEEK 1 — Game Engine + DevOps
+
+#### Session 1 (~45 min): Repo + DevOps scaffold
 
 ```
-Create test_week3.py:
+1. Create pyproject.toml (black, ruff, mypy, pytest, pygame, numpy)
+2. Create Makefile (make run, make test, make check, make headless)
+3. Create .pre-commit-config.yaml (black, ruff, no-commit-to-main)
+4. Create .github/workflows/ci.yml (Python 3.9 + 3.11 matrix)
+5. pip install -e ".[dev]" && pre-commit install
+6. git commit -m "chore: devops scaffold, CI"
+Push → verify GitHub Actions goes green
+```
 
-1. Initialize Population with 8 inputs, 2 outputs
-2. Run 5 generations:
-   a. Create networks from genomes
-   b. Assign random fitness (or use headless game from Week 1)
-   c. Call evolve_one_generation(fitness_list)
-3. Print stats each generation:
-   - Best fitness
-   - Avg fitness
-   - Num species
-   - Stagnation counts
-4. Verify best fitness increases over generations (not guaranteed, but likely)
+See `docs/DEVOPS_GUIDE.md` for exact file contents to hand Antigravity.
 
-If you have the game from Week 1 integrated:
-- Run each genome through headless game
-- Use returned score as fitness
-- Watch NEAT learn to play
+#### Session 2 (~60 min): Game engine + sensors + headless
+
+```
+1. Create game/constants.py (all magic numbers above)
+2. Create game/engine.py:
+   - GameEngine(headless=False)
+   - update(dt): gravity, flap physics, pipe movement, collision
+   - render(): pygame draw calls (skip if headless)
+   - get_state() → GameState dataclass
+   - set_action(flap: bool)
+   - is_alive() → bool, get_score() → float, reset()
+3. Create game/sensors.py:
+   - extract_inputs(state: GameState) → list[float]
+   - 5 normalised inputs (see spec above)
+4. Create game/headless.py:
+   - run_episode(network) → float fitness score
+   - Must run 150 episodes in under 10 seconds
+5. Test: python main.py (game opens, bird falls, dies at first pipe)
+Commit: "feat(game): flappy bird engine, sensors, headless mode"
 ```
 
 ---
 
-### **WEEK 4: Visualizer & Polish**
+### WEEK 2 — Genome + Neural Network
 
-#### Prompt 4.1 — Stats Tracker
-
-```
-Create visualizer/stats.py:
-
-class GenerationStats:
-    generation: int
-    best_fitness: float
-    avg_fitness: float
-    num_species: int
-    stagnation_counters: dict[int, int]  # species_id -> counter
-    timestamp: float
-
-class StatsHistory:
-    def __init__(self):
-        self.history: list[GenerationStats] = []
-    
-    def record(self, population: Population) -> None:
-        # Compute stats from population, append to history
-    
-    def get_best_fitnesses(self) -> list[float]:
-        return [s.best_fitness for s in self.history]
-    
-    def get_avg_fitnesses(self) -> list[float]:
-        return [s.avg_fitness for s in self.history]
-```
-
-#### Prompt 4.2 — Network Visualizer
+#### Session 3 (~50 min): Innovation tracker + genome
 
 ```
-Create visualizer/network_viz.py:
-
-class NetworkVisualizer:
-    def __init__(self, width=300, height=400):
-        # Will draw neural network graph on pygame surface
-    
-    def draw_network(self, network: NeuralNetwork, surface: pygame.Surface) -> None:
-        '''
-        Draw the network topology:
-        1. Position nodes in layers (x by layer, y by rank within layer)
-        2. Draw connections (thickness ∝ weight, darker if disabled)
-        3. Color: input=blue, hidden=purple, output=green
-        4. Label each node with activation type
-        '''
+1. Create neat/innovation.py (InnovationTracker singleton — see spec above)
+2. Create neat/genome.py:
+   - NodeGene, ConnectionGene, Genome dataclasses
+   - Genome.copy() → deep copy
+   - Genome.add_node(conn) → split connection, new node
+   - Genome.add_connection(in_id, out_id) → new connection + cycle check
+   - Genome.mutate_weights(rates)
+   - Genome.mutate(config: NEATConfig)
+   - Initial genome: 5 inputs → 1 output, direct connections
 ```
 
-#### Prompt 4.3 — Main Visualizer
-
+**Ask Antigravity to EXPLAIN (highlight + Ask):**
 ```
-Create visualizer/main_viz.py:
-
-class NEATVisualizer:
-    def __init__(self, game_engine: GameHeadless, population: Population):
-        self.game = game_engine
-        self.population = population
-        self.stats = StatsHistory()
-        self.paused = False
-        self.speed_mult = 1.0
-    
-    def run(self):
-        # Pygame window with:
-        # - Top-left: best agent playing (live)
-        # - Bottom-left: network graph of best agent
-        # - Right: stats panel (best_fit, avg_fit, species_count, generation)
-        # - Bottom-right: fitness curve plot
-        
-        # Main loop:
-        # 1. Get user input (space=pause, R=reset, arrow keys, etc.)
-        # 2. Run one evolution generation
-        # 3. Render game for best genome
-        # 4. Draw stats + network
-        # 5. Draw fitness curve
+"Why does add_node() disable the original connection instead of deleting it?"
+"What is the purpose of cycle detection in add_connection()?"
 ```
 
-#### Prompt 4.4 — Integration & Tuning
+Commit: `"feat(neat): innovation tracker and genome dataclasses"`
+
+#### Session 4 (~50 min): Neural network + integration test
 
 ```
-Update main.py to tie everything together:
+1. Create neat/network.py:
+   - NeuralNetwork(genome: Genome)
+   - _topological_sort() → list[int] (node processing order)
+   - evaluate(inputs: list[float]) → list[float]
+   - Input nodes: identity. Hidden: tanh. Output: sigmoid.
+```
 
-from game.headless import GameHeadless
-from neat.population import Population, NEATConfig
-from visualizer.main_viz import NEATVisualizer
+**Ask Antigravity to EXPLAIN:**
+```
+"Trace evaluate() with 5 inputs, 1 hidden node, 1 output — show each step"
+"Why does topological sort break if there are cycles?"
+```
 
-config = NEATConfig(
-    pop_size=150,
-    dt=3.0,
-    max_stagnation=20
-)
+```
+2. Wire it all together: genome → network → headless game, print score
+3. Run: random network plays flappy bird, score is (usually) 0
+```
 
-game = GameHeadless()
-population = Population(num_inputs=8, num_outputs=2, config=config)
-visualizer = NEATVisualizer(game, population)
+Commit: `"feat(neat): feedforward neural network from genome"`
 
-# Main evolution loop with visualization
-for generation in range(500):
-    # Evaluate all genomes
-    fitness_values = []
-    for genome in population.genomes:
-        network = NeuralNetwork(genome)
-        score = game.run_episode(network)
-        fitness_values.append(score)
-    
-    population.evolve_one_generation(fitness_values)
-    visualizer.stats.record(population)
-    visualizer.render()  # Draw one frame
-    
-    if generation % 10 == 0:
-        print(f"Gen {generation}: best={max(fitness_values):.2f}, "
-              f"avg={sum(fitness_values)/len(fitness_values):.2f}, "
-              f"species={len(population.species)}")
+---
 
-print("Evolution complete!")
+### WEEK 3 — Full NEAT Evolution
+
+#### Session 5 (~60 min): Speciation + crossover
+
+```
+1. Create neat/species.py:
+   - compatibility_distance(g1, g2, c1, c2, c3) → float
+     Align by innovation number. Count E (excess), D (disjoint), W̄ (avg weight diff)
+     δ = (c1·E + c2·D)/N + c3·W̄
+   - Species dataclass
+   - Speciation.speciate(genomes, existing_species, threshold) → list[Species]
+```
+
+**Ask Antigravity to EXPLAIN:**
+```
+"Give me a concrete example of two genomes — show me which genes are
+ excess vs disjoint and how the distance is calculated step by step"
+```
+
+```
+2. Add to neat/genome.py:
+   - crossover(parent1: Genome, parent2: Genome) → Genome
+     (parent1 assumed fitter, or equal fitness → random)
+```
+
+**Ask Antigravity to EXPLAIN:**
+```
+"Why do excess/disjoint genes only come from the fitter parent?"
+```
+
+Commit: `"feat(neat): species, compatibility distance, crossover"`
+
+#### Session 6 (~60 min): Population + generation loop
+
+```
+1. Create neat/population.py:
+   - NEATConfig dataclass
+   - Population(num_inputs=5, num_outputs=1, config)
+   - Population.evolve_one_generation(fitness_values: list[float])
+     Steps 1-9 from the evolution loop above
+   - Population.get_best_genome() → Genome
+
+2. Integration test: 5 full generations, print stats each gen
+   Expected: best fitness increases, species count changes
+   If fitness stays at 0: fitness function bug — check pipes_cleared count
+
+3. Let it run 20 generations — birds should start clearing 1-2 pipes
+```
+
+Commit: `"feat(neat): population and full generation loop"`
+
+---
+
+### WEEK 4 — Visualizer + Polish
+
+#### Session 7 (~60 min): Stats + network graph + visualizer
+
+```
+1. Create visualizer/stats.py:
+   - GenerationStats dataclass
+   - StatsHistory.record(population) and history getters
+
+2. Create visualizer/network_viz.py:
+   - NetworkVisualizer.draw_network(network, surface)
+   - Node positions by layer (x) and rank within layer (y)
+   - Nodes: input=blue, hidden=purple, output=green
+   - Connections: thickness ∝ |weight|, colour = sign (green/red)
+
+3. Create visualizer/main_viz.py:
+   4-panel pygame window:
+   - Top-left:     best agent playing Flappy Bird live
+   - Bottom-left:  neural network graph of best agent
+   - Top-right:    stats panel (gen, best fit, avg fit, species)
+   - Bottom-right: fitness curve (best + avg over all generations)
+   Controls: Space=pause, R=reset, +/-=speed, arrows=inspect agents
+
+Test: python main.py — window opens, birds visible, network draws
+```
+
+Commit: `"feat(visualizer): 4-panel live evolution view"`
+
+#### Session 8 (~45 min): Tuning + demo + release
+
+```
+Run 200 generations. Expected behaviour:
+  Gen 1-10:    all birds die immediately (score ~0)
+  Gen 10-50:   some start clearing 1-2 pipes
+  Gen 50-150:  consistent 3-5 pipe clears, population stabilising
+  Gen 150-200: best agent clearing 10+ pipes, network diagram settling
+
+If agents plateau early: increase add_node_rate to 0.05
+If too many species (>15): increase dt to 4.0
+If species dying too fast: increase max_stagnation to 30
+
+Record a video of the best agent (gen 100+) playing
+git tag -a v0.1.0 -m "Working NEAT Flappy Bird"
+```
+
+**LinkedIn post structure:**
+```
+Hook:      "I wrote the algorithm that made 'AI learns to play X' videos famous."
+What NEAT: Evolves the network structure, not just the weights
+The cool part: Networks start with ZERO hidden neurons and grow complexity
+Visual:    GIF of generation 1 (all dying) vs generation 200 (clearing pipes)
+Technical: Innovation numbers and why they solve the competing conventions problem
+Tags:      #NEAT #NeuroEvolution #MachineLearning #Python #GameAI
 ```
 
 ---
@@ -756,35 +435,34 @@ print("Evolution complete!")
 ## Checkpoints & Testing
 
 ### Week 1 Checkpoint
-- [ ] Game runs without crashing (human can play with arrow keys or space)
-- [ ] Score increases as player progresses
-- [ ] Obstacles spawn and move correctly
-- [ ] Collision detection works (test by hitting obstacle)
-- [ ] Headless mode runs 100 episodes in <5 seconds
-- [ ] Sensors return normalized values (all in [−1, 1] or [0, 1])
+- [ ] Game runs without crashing
+- [ ] Score increases as pipes are cleared
+- [ ] Pipes spawn and move correctly
+- [ ] Collision detection works (test by hitting a pipe)
+- [ ] Headless mode runs 150 episodes in <10 seconds
+- [ ] Sensors return normalised values (all in [-1, 1] or [0, 1])
 
 ### Week 2 Checkpoint
-- [ ] InnovationTracker returns same number for same (in, out) pair within generation
-- [ ] Genome can be created, mutated (weights, node, connection)
-- [ ] Network evaluates correctly (outputs in [0, 1] for sigmoid)
-- [ ] Topological sort works (no cycles in network)
+- [ ] `InnovationTracker` returns the same number for the same (in, out) pair within a generation
+- [ ] Genome can be created and mutated (weights, node, connection)
+- [ ] Network evaluates correctly (output in [0, 1] for sigmoid)
+- [ ] Topological sort works (no cycles reach it)
 - [ ] Network evaluation is deterministic (same inputs → same outputs)
 
 ### Week 3 Checkpoint
-- [ ] Compatibility distance < threshold for two very similar genomes
-- [ ] Compatibility distance > threshold for two very different genomes
+- [ ] Compatibility distance is small for two very similar genomes
+- [ ] Compatibility distance is large for two very different genomes
 - [ ] Speciation assigns genomes to species
 - [ ] Crossover produces valid offspring (no broken connections)
 - [ ] Evolution loop runs 5 generations without crashing
 - [ ] Best fitness increases (or at least doesn't decrease rapidly)
 
 ### Week 4 Checkpoint
-- [ ] Visualizer window opens and displays game
+- [ ] Visualizer window opens and displays the game
 - [ ] Network graph renders without distortion
 - [ ] Stats panel updates each generation
 - [ ] Fitness curve plots correctly
 - [ ] Can pause/resume and adjust speed
-- [ ] Record best agent and save video (optional but impressive)
 
 ---
 
@@ -793,7 +471,7 @@ print("Evolution complete!")
 ```bash
 # Week 1
 git checkout -b week/1-game-engine
-# ... commit game/constants.py, game/engine.py, game/sensors.py ...
+# ... commit game/constants.py, game/engine.py, game/sensors.py, game/headless.py ...
 git push origin week/1-game-engine
 git checkout main && git merge week/1-game-engine
 
@@ -818,79 +496,69 @@ git checkout main && git merge week/4-visualizer-polish
 
 ---
 
-## Hyperparameter Tuning (Week 4)
+## Hyperparameter Tuning Reference
 
-Start with these and tweak based on results:
+Start with the defaults in `NEATConfig` and tweak based on results:
 
-```python
-config = NEATConfig(
-    pop_size=150,              # 100–200 is typical
-    c1=1.0,                    # excess gene penalty
-    c2=1.0,                    # disjoint gene penalty
-    c3=0.4,                    # weight difference penalty
-    dt=3.0,                    # speciation threshold (lower = more species)
-    weight_mutate_rate=0.8,    # % of conns that mutate
-    weight_perturb_rate=0.9,   # of those, % that get perturbed vs reset
-    weight_perturb_power=0.1,  # gaussian std dev
-    add_node_rate=0.03,        # low, rarely split connections
-    add_conn_rate=0.05,        # slightly higher
-    max_stagnation=20          # kill species after 20 gens with no improvement
-)
 ```
-
-**If convergence is too slow:** increase `pop_size`, decrease `dt` (more species = more innovation)
-**If overfitting:** increase `max_stagnation`, decrease mutation rates
-**If agents look random:** increase fitness rewards in game (fitness signal too weak)
+Too slow convergence:  increase pop_size (150→200), decrease dt (3.0→2.5)
+Too many species:      increase dt (3.0→4.0)
+Species collapsing:    increase max_stagnation (20→30)
+Agents not improving:  check fitness function — is pipes_cleared updating?
+Network not growing:   increase add_node_rate (0.03→0.05)
+Fitness oscillating:   reduce weight_perturb_power (0.1→0.05)
+```
 
 ---
 
 ## Common Pitfalls to Avoid
 
-1. **Innovation numbers not aligned:** Crossover breaks if two genomes use different numbers for the same connection. Use global tracker.
-2. **Fitness function too weak:** Agents learn to survive by doing nothing. Always reward progress, not just time alive.
-3. **Network has cycles:** Topological sort will hang. Add cycle detection in network evaluation.
-4. **Headless mode is slow:** Make sure you're not rendering. Remove pygame calls in headless path.
-5. **Speciation threshold too low/high:** <1 = no species, all unique. >10 = one giant species (no speciation). Start at 3.
-6. **Excess/disjoint genes flipped:** In crossover, both parents might be "fitter" if fitness is tied. Break ties by species age or genome size.
-7. **Disabled genes not inherited:** Children of two parents should inherit disabled genes at higher rate (75% of disabled stays disabled even in child).
+1. **Innovation numbers not aligned:** crossover breaks if two genomes use different numbers for the same connection. Use the global tracker, and reset only the history — never the counter.
+2. **Fitness function too weak:** agents learn to survive by doing nothing. Reward pipes cleared, not just time alive.
+3. **Network has cycles:** topological sort will hang. Reject cycles in `add_connection()`.
+4. **Headless mode is slow:** make sure there's no pygame rendering happening in the headless path.
+5. **Speciation threshold too low/high:** `dt` < 1 → no species, all unique. `dt` > 10 → one giant species (no speciation). Start at 3.0.
+6. **Excess/disjoint genes flipped:** if fitness is tied between parents, break ties consistently (e.g. by species age or genome size).
+7. **Disabled genes not inherited:** children should inherit disabled genes at a higher rate — 75% stay disabled even in the child.
 
 ---
 
 ## What Success Looks Like
 
-- **Gen 1–10:** Agents move randomly, score ~10–50
-- **Gen 10–50:** Some agents accidentally beat obstacles, scores drift upward
-- **Gen 50–100:** Visible improvement, strategy emerges (e.g., jump at specific range)
-- **Gen 100–200:** Agents play almost perfectly, may plateau
-- **Gen 200+:** Fine-tuning or overfitting (depends on game complexity)
+```
+Gen 1-10:    all birds die immediately (score ~0)
+Gen 10-50:   some start clearing 1-2 pipes
+Gen 50-150:  consistent 3-5 pipe clears, population stabilising
+Gen 150-200: best agent clearing 10+ pipes, network diagram settling
+```
 
-By Week 4 (full month), you should have agents that:
-- Play noticeably better than random (easily 5–10x higher score)
-- Show learned behavior (consistent strategy, not luck)
-- Have a diverse population (multiple species)
+By the end of Week 4, you should have agents that:
+- Consistently clear multiple pipes (not luck — repeatable across runs)
+- Show a diverse population (multiple species)
 - Have stable fitness curves (not crashing, not random oscillation)
+- A network that grew hidden structure beyond the initial direct connections
 
 ---
 
-## Running Incrementally with Copilot
+## Running Incrementally with Antigravity
 
-**Session 1 (30 min):** Run Prompt 1.1 + 1.2. You'll have a working game engine.
+**Session 1 (~45 min):** Repo + DevOps scaffold. CI goes green.
 
-**Session 2 (30 min):** Run Prompt 1.3 + 1.4. Headless mode works.
+**Session 2 (~60 min):** Game engine + sensors + headless. Bird falls, dies at first pipe.
 
-**Session 3 (20 min):** Run Prompt 2.1 + 2.2. Genomes exist.
+**Session 3 (~50 min):** Innovation tracker + genome. Genomes exist and mutate.
 
-**Session 4 (30 min):** Run Prompt 2.3 + 2.4. Networks work.
+**Session 4 (~50 min):** Neural network + integration test. Random network plays (badly).
 
-**Session 5 (40 min):** Run Prompt 3.1 + 3.2. Speciation works.
+**Session 5 (~60 min):** Speciation + crossover.
 
-**Session 6 (40 min):** Run Prompt 3.3 + 3.4. Full NEAT loop.
+**Session 6 (~60 min):** Population + generation loop. 20 generations, birds start clearing pipes.
 
-**Session 7 (30 min):** Run Prompt 4.1 + 4.2. Visualizer foundations.
+**Session 7 (~60 min):** Stats + network graph + visualizer.
 
-**Session 8 (40 min):** Run Prompt 4.3 + 4.4. Full integration + tuning.
+**Session 8 (~45 min):** Tuning + demo + release (v0.1.0 tag).
 
-Each session can be a focused GitHub Copilot Chat. Paste the prompt, let it write the code, review and refine.
+Each session is one focused Antigravity Chat sitting. Paste the session's prompts, let it write the code, review and refine before committing. (These techniques apply just as well if you're using GitHub Copilot or another AI pair-programmer — Antigravity is this project's IDE of choice, not a hard requirement.)
 
 ---
 

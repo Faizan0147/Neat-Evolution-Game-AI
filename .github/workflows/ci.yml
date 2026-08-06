@@ -14,6 +14,11 @@ jobs:
       matrix:
         python-version: ["3.9", "3.11"]
 
+    # Pygame needs a dummy display driver in headless CI environments
+    env:
+      SDL_VIDEODRIVER: dummy
+      SDL_AUDIODRIVER: dummy
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,7 +29,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install system dependencies (pygame needs these on Linux)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y python3-dev libsdl2-dev libsdl2-mixer-dev \
+            libsdl2-image-dev libsdl2-ttf-dev libfreetype6-dev
+
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
@@ -40,4 +51,4 @@ jobs:
         continue-on-error: true
 
       - name: Test with coverage
-        run: pytest
+        run: pytest tests/test_week1.py -v

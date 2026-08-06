@@ -1,6 +1,8 @@
-# NEAT Sprint — DevOps Setup & Deployment Guide
+# NEAT Flappy Bird — DevOps Setup & Deployment Guide
 
-> **For AI Agent use:** This file defines the complete DevOps infrastructure for the NEAT Neural Evolution Game AI project. Follow these specifications when setting up tooling, CI/CD pipelines, Docker, deployment, and monitoring. Do not deviate from the structure defined here.
+> **For AI Agent use (Antigravity):** This file defines the complete DevOps infrastructure for the NEAT Flappy Bird project (see `docs/02_NEAT_FLAPPY_BIRD.md` for the full plan). Follow these specifications when setting up tooling, CI/CD pipelines, Docker, deployment, and monitoring. Do not deviate from the structure defined here.
+>
+> **Scope note:** the core 4-week sprint plan only requires GitHub Actions CI + pre-commit (black, ruff) + pytest + Makefile, plus semantic versioning and conventional commits — with Docker as an *optional* Week 4 stretch goal. Sections 8 (Deployment), 9.1 (Sentry), and 11.1 (MkDocs) below are optional extras beyond that core scope; skip them unless you want the extra polish.
 
 ---
 
@@ -27,10 +29,10 @@
 ## 1. Project Metadata
 
 ```
-Project:     NEAT Neural Evolution Game AI
+Project:     NEAT Flappy Bird — Neural Evolution Game AI
 Language:    Python 3.11
 Framework:   pygame 2.1+, numpy 1.21+
-Repo:        github.com/USERNAME/neural-evolution-game-ai
+Repo:        github.com/USERNAME/neat-flappy
 License:     MIT
 Python min:  3.9
 ```
@@ -56,16 +58,16 @@ Python min:  3.9
 ### 2.1 Required Files in Root
 
 ```
-neat-sprint/
+neat-flappy/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml               ← runs on every push
 │       └── release.yml          ← runs on version tags
 ├── docs/
+│   ├── 02_NEAT_FLAPPY_BIRD.md    ← the complete plan (source of truth)
 │   ├── NEAT_COPILOT_GUIDE.md
 │   ├── COPILOT_WORKFLOW.md
 │   ├── QUICK_REFERENCE.md
-│   ├── FILE_STRUCTURE.md
 │   └── DEVOPS_GUIDE.md          ← this file
 ├── game/
 ├── neat/
@@ -92,7 +94,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.backends.legacy:build"
 
 [project]
-name = "neat-sprint"
+name = "neat-flappy"
 version = "0.1.0"
 description = "NEAT neuroevolution from scratch — evolves neural networks to play a 2D game"
 authors = [{ name = "YOUR_NAME", email = "YOUR_EMAIL" }]
@@ -151,8 +153,8 @@ fail_under = 60
 
 ```bash
 # Clone repo
-git clone https://github.com/USERNAME/neural-evolution-game-ai.git
-cd neural-evolution-game-ai
+git clone https://github.com/USERNAME/neat-flappy.git
+cd neat-flappy
 
 # Create virtual environment
 python -m venv venv
@@ -531,12 +533,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t neat-sprint:${{ github.ref_name }} .
+        run: docker build -t neat-flappy:${{ github.ref_name }} .
 
       - name: Push to GitHub Container Registry
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker tag neat-sprint:${{ github.ref_name }} ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          docker tag neat-flappy:${{ github.ref_name }} ghcr.io/${{ github.repository }}:${{ github.ref_name }}
           docker push ghcr.io/${{ github.repository }}:${{ github.ref_name }}
 
       - name: Create GitHub Release
@@ -677,17 +679,17 @@ build/
 
 ```bash
 # Build image
-docker build -t neat-sprint .
+docker build -t neat-flappy .
 
 # Run headless evolution
-docker run --rm neat-sprint
+docker run --rm neat-flappy
 
 # Run with environment variables
 docker run --rm \
   -e SENTRY_DSN=your_dsn_here \
   -e GENERATIONS=1000 \
   -v $(pwd)/checkpoints:/app/checkpoints \
-  neat-sprint
+  neat-flappy
 
 # Start with docker-compose
 docker compose up
@@ -767,8 +769,8 @@ curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
 
 # 2. Clone your repo
-git clone https://github.com/USERNAME/neural-evolution-game-ai.git
-cd neural-evolution-game-ai
+git clone https://github.com/USERNAME/neat-flappy.git
+cd neat-flappy
 
 # 3. Create .env file
 cp .env.example .env
@@ -985,9 +987,9 @@ Required secrets:
 
 **mkdocs.yml:**
 ```yaml
-site_name: NEAT Sprint Docs
-site_description: NEAT Neural Evolution Game AI — From-scratch implementation
-repo_url: https://github.com/USERNAME/neural-evolution-game-ai
+site_name: NEAT Flappy Bird Docs
+site_description: NEAT Flappy Bird — From-scratch neuroevolution implementation
+repo_url: https://github.com/USERNAME/neat-flappy
 
 theme:
   name: material
@@ -1011,9 +1013,10 @@ plugins:
 
 nav:
   - Home: index.md
+  - Project Plan: 02_NEAT_FLAPPY_BIRD.md
+  - Antigravity Guide: NEAT_COPILOT_GUIDE.md
+  - Antigravity Workflow: COPILOT_WORKFLOW.md
   - DevOps Guide: DEVOPS_GUIDE.md
-  - Copilot Guide: NEAT_COPILOT_GUIDE.md
-  - File Structure: FILE_STRUCTURE.md
   - Quick Reference: QUICK_REFERENCE.md
   - API Reference:
       - Game: api/game.md
@@ -1082,7 +1085,7 @@ def compatibility_distance(
 
 # Default target
 help:
-	@echo "NEAT Sprint — Available commands:"
+	@echo "NEAT Flappy Bird — Available commands:"
 	@echo ""
 	@echo "  make install      Install all dependencies"
 	@echo "  make setup        Full dev environment setup"
@@ -1142,13 +1145,13 @@ clean:
 	rm -rf .pytest_cache htmlcov .coverage coverage.xml dist build *.egg-info
 
 docker-build:
-	docker build -t neat-sprint .
+	docker build -t neat-flappy .
 
 docker-run:
 	docker run --rm \
 		--env-file .env \
 		-v $(PWD)/checkpoints:/app/checkpoints \
-		neat-sprint
+		neat-flappy
 
 docs:
 	mkdocs serve
@@ -1187,7 +1190,6 @@ RELEASE=0.0.0                      # Updated by CI on release
 # ─────────────────────────────────────
 POP_SIZE=150                       # Population size (100-300)
 GENERATIONS=500                    # Number of generations to run
-GAME_TYPE=dino                     # dino | flappy | snake | platform
 HEADLESS=false                     # true = no pygame window
 CHECKPOINT_DIR=checkpoints         # Where to save best genomes
 CHECKPOINT_EVERY=50                # Save checkpoint every N generations
@@ -1277,9 +1279,9 @@ Versioning follows [Semantic Versioning](https://semver.org).
 
 ## [0.1.0] — 2024-01-14
 ### Added
-- Dino runner game engine with pygame
+- Flappy Bird game engine with pygame
 - Headless mode for fast evaluation
-- Sensor extraction (8 normalized inputs)
+- Sensor extraction (5 normalized inputs)
 - Basic genome and feedforward network
 ```
 
@@ -1304,7 +1306,7 @@ git push origin v0.2.0
 
 ## 15. Agent Prompt Templates
 
-> **For Copilot:** Use these prompts when the user asks to set up specific DevOps components.
+> **For Antigravity (or any AI pair-programmer):** Use these prompts when the user asks to set up specific DevOps components.
 
 ### Setup GitHub Actions CI
 
@@ -1392,7 +1394,7 @@ Set up MkDocs with the Material theme for this project.
 
 1. Create mkdocs.yml with dark theme (slate + deep purple)
 2. Enable mkdocstrings for auto-generating API docs from docstrings
-3. Add nav structure: Home, DevOps Guide, Copilot Guide, API Reference
+3. Add nav structure: Home, Project Plan, Antigravity Guide, Antigravity Workflow, DevOps Guide, Quick Reference, API Reference
 4. Add mkdocs + mkdocs-material + mkdocstrings to pyproject.toml dev deps
 5. Add docs and docs-deploy targets to Makefile
 

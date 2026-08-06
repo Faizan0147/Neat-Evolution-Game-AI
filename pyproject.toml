@@ -46,4 +46,5 @@ strict = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+python_files = ["test*.py"]
 addopts = "--cov=. --cov-report=term-missing --cov-report=xml -v"

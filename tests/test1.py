@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import time
 
-import pytest
-
 from game.constants import (
-    FPS,
     GRAVITY,
     PIPE_GAP,
     PIPE_WIDTH,
@@ -32,7 +29,9 @@ class TestEngineInitialState:
         state = headless_engine.get_state()
         assert len(state.pipes) >= 1
 
-    def test_player_starts_in_middle_of_screen(self, headless_engine: GameEngine) -> None:
+    def test_player_starts_in_middle_of_screen(
+        self, headless_engine: GameEngine
+    ) -> None:
         state = headless_engine.get_state()
         assert 0 < state.player_x < SCREEN_WIDTH * 0.5
         assert SCREEN_HEIGHT * 0.2 < state.player_y < SCREEN_HEIGHT * 0.8
@@ -45,7 +44,9 @@ class TestEnginePhysics:
         state_after = headless_engine.get_state()
         assert state_after.player_vy > state_before.player_vy
 
-    def test_gravity_magnitude_matches_constant(self, headless_engine: GameEngine) -> None:
+    def test_gravity_magnitude_matches_constant(
+        self, headless_engine: GameEngine
+    ) -> None:
         headless_engine.update()
         state = headless_engine.get_state()
         assert abs(state.player_vy - GRAVITY) < 1e-6
@@ -93,7 +94,9 @@ class TestEngineCollision:
         headless_engine.update()
         assert not headless_engine.is_alive()
 
-    def test_surviving_through_gap_does_not_kill(self, headless_engine: GameEngine) -> None:
+    def test_surviving_through_gap_does_not_kill(
+        self, headless_engine: GameEngine
+    ) -> None:
         px = headless_engine._player.x
         gap_y = 200.0
         pipe = PipePair(
@@ -169,11 +172,15 @@ class TestSensors:
         inputs = extract_inputs(headless_engine.get_state())
         assert 0.0 <= inputs[0] <= 1.0
 
-    def test_input_2_dist_to_top_in_neg1_to_1(self, headless_engine: GameEngine) -> None:
+    def test_input_2_dist_to_top_in_neg1_to_1(
+        self, headless_engine: GameEngine
+    ) -> None:
         inputs = extract_inputs(headless_engine.get_state())
         assert -1.0 <= inputs[1] <= 1.0
 
-    def test_input_3_dist_to_bottom_in_neg1_to_1(self, headless_engine: GameEngine) -> None:
+    def test_input_3_dist_to_bottom_in_neg1_to_1(
+        self, headless_engine: GameEngine
+    ) -> None:
         inputs = extract_inputs(headless_engine.get_state())
         assert -1.0 <= inputs[2] <= 1.0
 
@@ -214,15 +221,21 @@ class TestFitnessFunction:
 
 
 class TestHeadlessRunner:
-    def test_run_episode_returns_float(self, headless_game: GameHeadless, random_network) -> None:
+    def test_run_episode_returns_float(
+        self, headless_game: GameHeadless, random_network
+    ) -> None:
         result = headless_game.run_episode(random_network)
         assert isinstance(result, float)
 
-    def test_run_episode_returns_nonnegative(self, headless_game: GameHeadless, random_network) -> None:
+    def test_run_episode_returns_nonnegative(
+        self, headless_game: GameHeadless, random_network
+    ) -> None:
         result = headless_game.run_episode(random_network)
         assert result >= 0.0
 
-    def test_always_flap_network_survives_some_frames(self, headless_game: GameHeadless) -> None:
+    def test_always_flap_network_survives_some_frames(
+        self, headless_game: GameHeadless
+    ) -> None:
         class AlwaysFlap:
             def evaluate(self, inputs: list[float]) -> list[float]:
                 return [1.0]
@@ -230,7 +243,9 @@ class TestHeadlessRunner:
         result = headless_game.run_episode(AlwaysFlap())
         assert result >= 0.0
 
-    def test_never_flap_network_survives_some_frames(self, headless_game: GameHeadless) -> None:
+    def test_never_flap_network_survives_some_frames(
+        self, headless_game: GameHeadless
+    ) -> None:
         class NeverFlap:
             def evaluate(self, inputs: list[float]) -> list[float]:
                 return [0.0]
@@ -255,7 +270,9 @@ class TestHeadlessRunner:
 
         assert elapsed < 10.0, f"150 episodes took {elapsed:.2f}s — must be < 10s."
 
-    def test_reset_between_episodes_clears_state(self, headless_game: GameHeadless) -> None:
+    def test_reset_between_episodes_clears_state(
+        self, headless_game: GameHeadless
+    ) -> None:
         class NeverFlap:
             def evaluate(self, inputs: list[float]) -> list[float]:
                 return [0.0]

@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from neat.innovation import InnovationTracker
-
 import pytest
 
-
+from neat.innovation import InnovationTracker
 
 
 @pytest.fixture(autouse=True)

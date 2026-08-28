@@ -51,4 +51,4 @@ jobs:
         continue-on-error: true
 
       - name: Test with coverage
-        run: pytest tests/test_week1.py -v
+        run: pytest

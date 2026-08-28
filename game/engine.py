@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from game.constants import (
@@ -12,8 +12,8 @@ from game.constants import (
     COLOR_PLAYER_OUTLINE,
     COLOR_SKY,
     COLOR_TEXT,
-    FPS,
     FLAP_STRENGTH,
+    FPS,
     GRAVITY,
     PIPE_FIRST_SPAWN_X,
     PIPE_GAP,
@@ -149,10 +149,24 @@ class GameEngine:
             top_x, top_y, top_w, top_h = pipe.top_rect()
             bot_x, bot_y, bot_w, bot_h = pipe.bottom_rect()
 
-            pg.draw.rect(screen, COLOR_PIPE, (int(top_x), int(top_y), int(top_w), int(top_h)))
-            pg.draw.rect(screen, COLOR_PIPE_OUTLINE, (int(top_x), int(top_y), int(top_w), int(top_h)), 2)
-            pg.draw.rect(screen, COLOR_PIPE, (int(bot_x), int(bot_y), int(bot_w), int(bot_h)))
-            pg.draw.rect(screen, COLOR_PIPE_OUTLINE, (int(bot_x), int(bot_y), int(bot_w), int(bot_h)), 2)
+            pg.draw.rect(
+                screen, COLOR_PIPE, (int(top_x), int(top_y), int(top_w), int(top_h))
+            )
+            pg.draw.rect(
+                screen,
+                COLOR_PIPE_OUTLINE,
+                (int(top_x), int(top_y), int(top_w), int(top_h)),
+                2,
+            )
+            pg.draw.rect(
+                screen, COLOR_PIPE, (int(bot_x), int(bot_y), int(bot_w), int(bot_h))
+            )
+            pg.draw.rect(
+                screen,
+                COLOR_PIPE_OUTLINE,
+                (int(bot_x), int(bot_y), int(bot_w), int(bot_h)),
+                2,
+            )
 
         px = int(self._player.x)
         py = int(self._player.y)

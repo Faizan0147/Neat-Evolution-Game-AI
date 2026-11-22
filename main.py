@@ -26,7 +26,7 @@ def run_visual_demo(max_seconds: float = 30.0) -> None:
     print("Flappy Bird visual demo — close the window or wait for bird to die.\n")
 
     running = True
-    for frame in range(deadline):
+    for _frame in range(deadline):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -48,9 +48,8 @@ def run_visual_demo(max_seconds: float = 30.0) -> None:
     pipes = game.get_score()
     frames = game.get_time_alive()
     fitness = fitness_from_game(pipes, frames)
-    print(
-        f"Episode ended — pipes cleared: {pipes}, frames: {frames}, fitness: {fitness:.2f}"
-    )
+    print(f"Episode ended — pipes cleared: {pipes}, frames: {frames}")
+    print(f"Fitness: {fitness:.2f}")
     pygame.quit()
 
 

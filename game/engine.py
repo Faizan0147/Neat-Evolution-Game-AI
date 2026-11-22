@@ -105,7 +105,6 @@ class GameEngine:
         if not self._alive:
             return
 
-        dt = 1.0 / FPS
         self._frames_alive += 1
 
         if self._flap_requested:

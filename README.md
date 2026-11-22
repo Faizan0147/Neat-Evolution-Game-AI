@@ -2,7 +2,7 @@
 
 > A from-scratch implementation of NeuroEvolution of Augmenting Topologies (NEAT) evolved to play a custom Flappy Bird clone. No ML libraries. Pure Python. Built in 4 weeks / 8 sessions.
 
-![Status](https://img.shields.io/badge/status-in%20progress-yellow) ![Python](https://img.shields.io/badge/python-3.9%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-in%20progress-yellow) ![Python](https://img.shields.io/badge/python-3.11%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## What is this?
 
@@ -70,7 +70,7 @@ neat-flappy/
 
 ### Prerequisites
 
-- Python 3.9+
+- Python 3.11+
 - pygame (for rendering and visualization)
 - Antigravity (or any editor) — the build plan is written as Antigravity prompts, but works with any AI pair-programmer
 

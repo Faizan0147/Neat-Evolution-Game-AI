@@ -7,7 +7,7 @@ name = "neat-evolution-game-ai"
 version = "0.1.0"
 description = "NEAT neuroevolution from scratch for a custom 2D game"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
     "pygame>=2.1.0",
     "numpy>=1.21.0",
@@ -28,11 +28,11 @@ include = ["game*", "neat*", "visualizer*"]
 
 [tool.black]
 line-length = 88
-target-version = ["py39", "py310", "py311"]
+target-version = ["py311", "py312"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "N", "UP", "B", "A"]
